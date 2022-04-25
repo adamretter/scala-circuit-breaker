@@ -17,8 +17,10 @@ private[circuitbreaker] class TestableThreadSafeCircuitBreaker(maxFailures: Int 
   private[circuitbreaker] override def getInternalState(): InternalState.InternalState = {
     state.get
   }
+
+  private[circuitbreaker] override def getMaxFailures(): Int = maxFailures
 }
 
-private[circuitbreaker] object TestableThreadSafeCircuitBreaker {
-  def apply(maxFailures: Int = 3, initialState: State.State = State.CLOSED) = new TestableThreadSafeCircuitBreaker(maxFailures, initialState)
+private[circuitbreaker] object TestableThreadSafeCircuitBreaker extends TestableCircuitBreakerFactory {
+  override def apply(maxFailures: Int = 3, initialState: State.State = State.CLOSED) = new TestableThreadSafeCircuitBreaker(maxFailures, initialState)
 }

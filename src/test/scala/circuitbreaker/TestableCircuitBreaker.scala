@@ -18,4 +18,17 @@ trait TestableCircuitBreaker extends CircuitBreaker {
    * @return the Internal State
    */
   private[circuitbreaker] def getInternalState(): InternalState.InternalState
+
+  /**
+   * Package-private method for use in Tests only.
+   *
+   * Get the Max Failures.
+   *
+   * @return the max failures.
+   */
+  private[circuitbreaker] def getMaxFailures(): Int
+}
+
+trait TestableCircuitBreakerFactory {
+  def apply(maxFailures: Int = 3, initialState: State.State) : TestableCircuitBreaker
 }
