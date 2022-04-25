@@ -5,6 +5,11 @@ import org.scalatest.wordspec.AnyWordSpec
 
 import java.util.UUID
 
+/**
+ * Spec behaviours for a Circuit Breaker.
+ *
+ * @author <a href="mailto:adam@evolvedbinary.com">Adam Retter</a>
+ */
 trait CircuitBreakerBehaviours extends AnyWordSpec with Matchers {
 
   def inClosedState(newCircuitBreaker: => TestableCircuitBreaker): Unit = {

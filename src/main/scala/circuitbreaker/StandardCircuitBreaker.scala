@@ -1,9 +1,18 @@
 package circuitbreaker
 
+import net.jcip.annotations.NotThreadSafe
+
 import java.util.{Timer, TimerTask}
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
 
+/**
+ * A Circuit Breaker which is designed only to be accessed
+ * from a single thread.
+ *
+ * @author <a href="mailto:adam@evolvedbinary.com">Adam Retter</a>
+ */
+@NotThreadSafe
 class StandardCircuitBreaker(val name: String, maxFailures: Int, resetTimeout: Duration, exponentialBackoffFactor: Int, maxResetTimeout: Duration, initialState: State.State) extends CircuitBreaker {
 
   import InternalState._

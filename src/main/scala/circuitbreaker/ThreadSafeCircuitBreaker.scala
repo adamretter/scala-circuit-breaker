@@ -1,11 +1,20 @@
 package circuitbreaker
 
+import net.jcip.annotations.ThreadSafe
+
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.{AtomicInteger, AtomicLong, AtomicReference}
 import java.util.{Timer, TimerTask}
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
 
+/**
+ * A Circuit Breaker which is designed to be safely
+ * accessed concurrently from multiple threads.
+ *
+ * @author <a href="mailto:adam@evolvedbinary.com">Adam Retter</a>
+ */
+@ThreadSafe
 class ThreadSafeCircuitBreaker(val name: String, maxFailures: Int, resetTimeout: Duration, exponentialBackoffFactor: Int, maxResetTimeout: Duration, initialState: State.State) extends CircuitBreaker {
 
   import InternalState._

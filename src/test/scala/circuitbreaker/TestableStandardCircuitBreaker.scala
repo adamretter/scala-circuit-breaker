@@ -2,6 +2,11 @@ package circuitbreaker
 
 import scala.concurrent.duration.DurationInt
 
+/**
+ * Testable extension of {@link StandardCircuitBreaker}.
+ *
+ * @author <a href="mailto:adam@evolvedbinary.com">Adam Retter</a>
+ */
 private[circuitbreaker] class TestableStandardCircuitBreaker(maxFailures: Int = 3, initialState: State.State = State.CLOSED) extends StandardCircuitBreaker(
   name ="TestableStandardCircuitBreaker",
   maxFailures = maxFailures,

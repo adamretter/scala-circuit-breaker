@@ -3,6 +3,11 @@ package circuitbreaker
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
+/**
+ * Specs for a Circuit Breaker.
+ *
+ * @author <a href="mailto:adam@evolvedbinary.com">Adam Retter</a>
+ */
 class CircuitBreakerSpec extends AnyWordSpec with Matchers with CircuitBreakerBehaviours {
 
   private val maxFailures = 3

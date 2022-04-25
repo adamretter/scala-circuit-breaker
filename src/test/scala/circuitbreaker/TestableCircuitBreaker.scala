@@ -1,5 +1,11 @@
 package circuitbreaker
 
+/**
+ * Additional methods to inspect the state of a Circuit Breaker
+ * when testing.
+ *
+ * @author <a href="mailto:adam@evolvedbinary.com">Adam Retter</a>
+ */
 trait TestableCircuitBreaker extends CircuitBreaker {
   /**
    * Package-private method for use in Tests only.
