@@ -13,7 +13,7 @@ class StandardCircuitBreaker(val name: String, maxFailures: Int, resetTimeout: D
     override def run(): Unit = state = RESET_TIMEOUT
   }
 
-  private var state = InternalState.from(initialState)
+  protected var state = InternalState.from(initialState)
   private var failures: Int = 0
   private val resetTimer = new Timer(s"$name-ResetTimer")
   private var resetTimeoutTaskDelay : Long = resetTimeout.toMillis
@@ -111,14 +111,6 @@ class StandardCircuitBreaker(val name: String, maxFailures: Int, resetTimeout: D
         // return the exception of the task
         throw exception
     }
-  }
-
-  private[circuitbreaker] override def setInternalState(internalState: InternalState.InternalState): Unit = {
-    state = internalState
-  }
-
-  private[circuitbreaker] def getInternalState(): InternalState.InternalState = {
-    state
   }
 }
 

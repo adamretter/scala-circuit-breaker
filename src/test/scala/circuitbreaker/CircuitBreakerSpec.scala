@@ -4,7 +4,6 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.util.UUID
-import scala.concurrent.duration.DurationInt
 
 class CircuitBreakerSpec extends AnyWordSpec with Matchers {
 
@@ -101,20 +100,18 @@ class CircuitBreakerSpec extends AnyWordSpec with Matchers {
 
   val maxFailures = 3
 
-  def TestCircuitBreaker() = ThreadSafeCircuitBreaker(maxFailures, resetTimeout = 10.second, exponentialBackoffFactor = 1, maxResetTimeout = 90.seconds)
+  def TestCircuitBreaker() = TestableThreadSafeCircuitBreaker(maxFailures)
 
-  def TestOpenCircuitBreaker() = {
-    ThreadSafeCircuitBreaker(maxFailures, resetTimeout = 10.second, exponentialBackoffFactor = 1, maxResetTimeout = 90.seconds, State.OPEN)
-  }
+  def TestOpenCircuitBreaker() = TestableThreadSafeCircuitBreaker(maxFailures, State.OPEN)
 
   def TestResetTimeoutCircuitBreaker() = {
-    val cb = ThreadSafeCircuitBreaker(maxFailures, resetTimeout = 10.second, exponentialBackoffFactor = 1, maxResetTimeout = 90.seconds)
+    val cb = TestableThreadSafeCircuitBreaker(maxFailures)
     cb.setInternalState(InternalState.RESET_TIMEOUT)
     cb
   }
 
   def TestHalfOpenCircuitBreaker() = {
-    val cb = ThreadSafeCircuitBreaker(maxFailures, resetTimeout = 10.second, exponentialBackoffFactor = 1, maxResetTimeout = 90.seconds)
+    val cb = TestableThreadSafeCircuitBreaker(maxFailures)
     cb.setInternalState(InternalState.HALF_OPEN)
     cb
   }

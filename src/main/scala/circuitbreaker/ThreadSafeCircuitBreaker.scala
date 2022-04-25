@@ -15,7 +15,7 @@ class ThreadSafeCircuitBreaker(val name: String, maxFailures: Int, resetTimeout:
     override def run(): Unit = state.compareAndSet(OPEN, RESET_TIMEOUT)
   }
 
-  private val state = new AtomicReference[InternalState](InternalState.from(initialState))
+  protected val state = new AtomicReference[InternalState](InternalState.from(initialState))
   private val failures = new AtomicInteger(0)
   private val resetTimer = new Timer(s"$name-ResetTimer")
   private val resetTimeoutTaskDelay = new AtomicLong(resetTimeout.toMillis)
@@ -121,14 +121,6 @@ class ThreadSafeCircuitBreaker(val name: String, maxFailures: Int, resetTimeout:
         // return the exception of the task
         throw exception
     }
-  }
-
-  private[circuitbreaker] override def setInternalState(internalState: InternalState.InternalState): Unit = {
-    state.set(internalState)
-  }
-
-  private[circuitbreaker] def getInternalState(): InternalState.InternalState = {
-    state.get
   }
 }
 
