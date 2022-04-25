@@ -46,7 +46,7 @@ class StandardCircuitBreaker(val name: String, maxFailures: Int, resetTimeout: D
     }
   }
 
-  def execClosedTask[U](task: () => U): U = {
+  private def execClosedTask[U](task: () => U): U = {
     Try(task()) match {
       case Success(value) =>
         // reset the failures count
@@ -76,7 +76,7 @@ class StandardCircuitBreaker(val name: String, maxFailures: Int, resetTimeout: D
     }
   }
 
-  def attemptReset[U](task: () => U): U = {
+  private def attemptReset[U](task: () => U): U = {
     Try(task()) match {
       case Success(value) =>
 
@@ -111,6 +111,37 @@ class StandardCircuitBreaker(val name: String, maxFailures: Int, resetTimeout: D
         // return the exception of the task
         throw exception
     }
+  }
+
+  private[circuitbreaker] override def setInternalState(internalState: InternalState.InternalState): Unit = {
+    state = internalState
+  }
+
+  private[circuitbreaker] def getInternalState(): InternalState.InternalState = {
+    state
+  }
+}
+
+object StandardCircuitBreaker {
+
+  private var nextSerialNumber = 0
+
+  def apply(maxFailures: Int, resetTimeout: Duration, exponentialBackoffFactor: Int, maxResetTimeout: Duration): StandardCircuitBreaker = {
+    apply(maxFailures, resetTimeout, exponentialBackoffFactor, maxResetTimeout, State.CLOSED)
+  }
+
+  def apply(maxFailures: Int, resetTimeout: Duration, exponentialBackoffFactor: Int, maxResetTimeout: Duration, initialState: State.State): StandardCircuitBreaker = {
+    val name = s"CircuitBreaker-${nextSerialNumber}"
+    nextSerialNumber += 1
+    apply(name, maxFailures, resetTimeout, exponentialBackoffFactor, maxResetTimeout, initialState)
+  }
+
+  def apply(name: String, maxFailures: Int, resetTimeout: Duration, exponentialBackoffFactor: Int, maxResetTimeout: Duration): StandardCircuitBreaker = {
+    apply(name, maxFailures, resetTimeout, exponentialBackoffFactor, maxResetTimeout, State.CLOSED)
+  }
+
+  def apply(name: String, maxFailures: Int, resetTimeout: Duration, exponentialBackoffFactor: Int, maxResetTimeout: Duration, initialState: State.State): StandardCircuitBreaker = {
+    new StandardCircuitBreaker(name, maxFailures, resetTimeout, exponentialBackoffFactor, maxResetTimeout, initialState)
   }
 }
 

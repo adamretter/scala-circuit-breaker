@@ -57,6 +57,46 @@ class CircuitBreakerSpec extends AnyWordSpec with Matchers {
         }
       }
     }
+
+    "in the RESET_TIMEOUT state" should {
+      "accept the first task, and switch to HALF_OPEN and then CLOSED if task succeeds" in {
+        val breaker = TestResetTimeoutCircuitBreaker()
+        val countingListener = CountingListener()
+        breaker.addListener(countingListener)
+
+        val successResult = s"OK-${uuid()}"
+        val actualResult = breaker.protect(() => successResult)
+        actualResult mustEqual successResult
+        breaker.getInternalState() mustEqual InternalState.CLOSED
+
+        countingListener.halfOpened mustEqual 1
+        countingListener.closed mustEqual 1
+      }
+
+      "accept the first task, and switch to HALF_OPEN and then OPEN if task fails" in {
+        val breaker = TestResetTimeoutCircuitBreaker()
+        val countingListener = CountingListener()
+        breaker.addListener(countingListener)
+
+        val failureResult = OperationFailedException()
+        an [OperationFailedException] mustBe thrownBy {
+          breaker.protect(() => throw failureResult)
+        }
+        breaker.getInternalState() mustEqual InternalState.OPEN
+
+        countingListener.halfOpened mustEqual 1
+        countingListener.opened mustEqual 1
+      }
+    }
+
+    "in the HALF_OPEN state" should {
+      "reject all tasks" in {
+        val successResult = s"OK-${uuid()}"
+        an [ExecutionRejectedException] mustBe thrownBy {
+          TestHalfOpenCircuitBreaker().protect(() => successResult)
+        }
+      }
+    }
   }
 
   val maxFailures = 3
@@ -65,6 +105,18 @@ class CircuitBreakerSpec extends AnyWordSpec with Matchers {
 
   def TestOpenCircuitBreaker() = {
     ThreadSafeCircuitBreaker(maxFailures, resetTimeout = 10.second, exponentialBackoffFactor = 1, maxResetTimeout = 90.seconds, State.OPEN)
+  }
+
+  def TestResetTimeoutCircuitBreaker() = {
+    val cb = ThreadSafeCircuitBreaker(maxFailures, resetTimeout = 10.second, exponentialBackoffFactor = 1, maxResetTimeout = 90.seconds)
+    cb.setInternalState(InternalState.RESET_TIMEOUT)
+    cb
+  }
+
+  def TestHalfOpenCircuitBreaker() = {
+    val cb = ThreadSafeCircuitBreaker(maxFailures, resetTimeout = 10.second, exponentialBackoffFactor = 1, maxResetTimeout = 90.seconds)
+    cb.setInternalState(InternalState.HALF_OPEN)
+    cb
   }
 
   def uuid() = UUID.randomUUID().toString

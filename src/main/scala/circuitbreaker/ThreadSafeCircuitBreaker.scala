@@ -53,7 +53,7 @@ class ThreadSafeCircuitBreaker(val name: String, maxFailures: Int, resetTimeout:
     }
   }
 
-  def execClosedTask[U](task: () => U): U = {
+  private def execClosedTask[U](task: () => U): U = {
     Try(task()) match {
       case Success(value) =>
         // reset the failures count
@@ -84,7 +84,7 @@ class ThreadSafeCircuitBreaker(val name: String, maxFailures: Int, resetTimeout:
     }
   }
 
-  def attemptReset[U](task: () => U): U = {
+  private def attemptReset[U](task: () => U): U = {
     Try(task()) match {
       case Success(value) =>
 
@@ -121,6 +121,14 @@ class ThreadSafeCircuitBreaker(val name: String, maxFailures: Int, resetTimeout:
         // return the exception of the task
         throw exception
     }
+  }
+
+  private[circuitbreaker] override def setInternalState(internalState: InternalState.InternalState): Unit = {
+    state.set(internalState)
+  }
+
+  private[circuitbreaker] def getInternalState(): InternalState.InternalState = {
+    state.get
   }
 }
 
