@@ -35,13 +35,13 @@ class ThreadSafeCircuitBreaker(val name: String, maxFailures: Int, resetTimeout:
     listeners.add(listener)
   }
 
-  override def protect[U](task: () => U): U = {
+  override def protect[U](task: () => U): ProtectResult[U] = {
     state.get() match {
       case CLOSED =>
         execClosedTask(task)
 
       case OPEN =>
-        throw new ExecutionRejectedException("Circuit Breaker is Open")
+        RejectedTask("Circuit Breaker is Open")
 
       case RESET_TIMEOUT =>
         if (state.compareAndSet(RESET_TIMEOUT, HALF_OPEN)) {
@@ -58,18 +58,18 @@ class ThreadSafeCircuitBreaker(val name: String, maxFailures: Int, resetTimeout:
         }
 
       case HALF_OPEN =>
-        throw new ExecutionRejectedException("Circuit Breaker is Half-Open and attempting to reset")
+        RejectedTask("Circuit Breaker is Half-Open and attempting to reset")
     }
   }
 
-  private def execClosedTask[U](task: () => U): U = {
+  private def execClosedTask[U](task: () => U): ProtectResult[U] = {
     Try(task()) match {
       case Success(value) =>
         // reset the failures count
         failures.set(0)
 
         // return the value of the task
-        value
+        TaskWithFuse(value)
 
       case Failure(exception) =>
         // increment the failures counter
@@ -93,7 +93,7 @@ class ThreadSafeCircuitBreaker(val name: String, maxFailures: Int, resetTimeout:
     }
   }
 
-  private def attemptReset[U](task: () => U): U = {
+  private def attemptReset[U](task: () => U): ProtectResult[U] = {
     Try(task()) match {
       case Success(value) =>
 
@@ -112,7 +112,7 @@ class ThreadSafeCircuitBreaker(val name: String, maxFailures: Int, resetTimeout:
         }
 
         // return the value of the task
-        value
+        TaskWithFuse(value)
 
       case Failure(exception) =>
         // multiply the resetTimeoutTaskDelay by the exponentialBackoffFactor, up to the configured maxResetTimeout

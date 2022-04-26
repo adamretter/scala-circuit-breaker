@@ -33,13 +33,13 @@ class StandardCircuitBreaker(val name: String, maxFailures: Int, resetTimeout: D
     listeners = listeners :+ listener
   }
 
-  override def protect[U](task: () => U): U = {
+  override def protect[U](task: () => U): ProtectResult[U] = {
     state match {
       case CLOSED =>
         execClosedTask(task)
 
       case OPEN =>
-        throw new ExecutionRejectedException("Circuit Breaker is Open")
+        RejectedTask("Circuit Breaker is Open")
 
       case RESET_TIMEOUT =>
         state = HALF_OPEN
@@ -51,18 +51,18 @@ class StandardCircuitBreaker(val name: String, maxFailures: Int, resetTimeout: D
         attemptReset(task)
 
       case HALF_OPEN =>
-        throw new ExecutionRejectedException("Circuit Breaker is Half-Open and attempting to reset")
+        RejectedTask("Circuit Breaker is Half-Open and attempting to reset")
     }
   }
 
-  private def execClosedTask[U](task: () => U): U = {
+  private def execClosedTask[U](task: () => U): ProtectResult[U] = {
     Try(task()) match {
       case Success(value) =>
         // reset the failures count
         failures = 0
 
         // return the value of the task
-        value
+        TaskWithFuse(value)
 
       case Failure(exception) =>
         // increment the failures counter
@@ -85,7 +85,7 @@ class StandardCircuitBreaker(val name: String, maxFailures: Int, resetTimeout: D
     }
   }
 
-  private def attemptReset[U](task: () => U): U = {
+  private def attemptReset[U](task: () => U): ProtectResult[U] = {
     Try(task()) match {
       case Success(value) =>
 
@@ -102,7 +102,7 @@ class StandardCircuitBreaker(val name: String, maxFailures: Int, resetTimeout: D
         listeners.map(_.onClosed())
 
         // return the value of the task
-        value
+        TaskWithFuse(value)
 
       case Failure(exception) =>
         // multiply the resetTimeoutTaskDelay by the exponentialBackoffFactor, up to the configured maxResetTimeout

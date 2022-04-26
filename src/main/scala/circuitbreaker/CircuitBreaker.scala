@@ -38,7 +38,36 @@ trait CircuitBreaker {
    *                                    the first task after transistioning to the Half-Open state.
    */
   @throws[ExecutionRejectedException]
-  def protect[U](task: () => U): U
+  def protect[U](task: () => U): ProtectResult[U]
+}
+
+/**
+ * Result of calling [[CircuitBreaker.protect[U](() => U)]].
+ */
+sealed abstract class ProtectResult[T] {
+  def isProtected: Boolean
+  def isRejected: Boolean = !isProtected
+
+  def fold[U](fe: String => U, ft: T => U): U = this match {
+    case TaskWithFuse(t) => ft(t)
+    case RejectedTask(message)  => fe(message)
+  }
+}
+/**
+ * Task has been accepted and is now protected with a "fuse".
+ *
+ * @param t the value
+ */
+case class TaskWithFuse[T](t: T) extends ProtectResult[T] {
+  override val isProtected: Boolean = true
+}
+/**
+ * Task has been rejected.
+ *
+ * @param message a description of why the task was rejected.
+ */
+case class RejectedTask[T](message: String) extends ProtectResult[T] {
+  override val isProtected: Boolean = false
 }
 
 /**

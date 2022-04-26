@@ -17,7 +17,7 @@ trait CircuitBreakerBehaviours extends AnyWordSpec with Matchers {
       "return a result from a successful task" in {
         val successResult = s"OK-${uuid()}"
         val actualResult = newCircuitBreaker.protect(() => successResult)
-        actualResult mustEqual successResult
+        actualResult mustEqual TaskWithFuse(successResult)
       }
 
       "return the exception from an unsuccessful task" in {
@@ -42,9 +42,8 @@ trait CircuitBreakerBehaviours extends AnyWordSpec with Matchers {
 
         // next OperationFailedException should exceed maxFailures, causing the transition to OPEN state, and therefore throwing ExecutionRejectedException
         val successResult = s"OK-${uuid()}"
-        an [ExecutionRejectedException] mustBe thrownBy {
-          breaker.protect(() => successResult)
-        }
+        val actualResult = breaker.protect(() => successResult)
+        actualResult mustBe a [RejectedTask[_]]
 
         countingListener.closed mustBe 0
         countingListener.halfOpened mustBe 0
@@ -57,9 +56,8 @@ trait CircuitBreakerBehaviours extends AnyWordSpec with Matchers {
     "in the OPEN state" should {
       "reject all tasks" in {
         val successResult = s"OK-${uuid()}"
-        an[ExecutionRejectedException] mustBe thrownBy {
-          newCircuitBreaker.protect(() => successResult)
-        }
+        val actualResult = newCircuitBreaker.protect(() => successResult)
+        actualResult mustBe a [RejectedTask[_]]
       }
     }
   }
@@ -73,7 +71,7 @@ trait CircuitBreakerBehaviours extends AnyWordSpec with Matchers {
 
         val successResult = s"OK-${uuid()}"
         val actualResult = breaker.protect(() => successResult)
-        actualResult mustEqual successResult
+        actualResult mustEqual TaskWithFuse(successResult)
         breaker.getInternalState() mustEqual InternalState.CLOSED
 
         countingListener.halfOpened mustEqual 1
@@ -101,9 +99,8 @@ trait CircuitBreakerBehaviours extends AnyWordSpec with Matchers {
     "in the HALF_OPEN state" should {
       "reject all tasks" in {
         val successResult = s"OK-${uuid()}"
-        an [ExecutionRejectedException] mustBe thrownBy {
-          newCircuitBreaker.protect(() => successResult)
-        }
+        val actualResult = newCircuitBreaker.protect(() => successResult)
+        actualResult mustBe a [RejectedTask[_]]
       }
     }
   }
